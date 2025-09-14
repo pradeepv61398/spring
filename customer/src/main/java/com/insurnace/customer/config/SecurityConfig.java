@@ -30,7 +30,9 @@ public class SecurityConfig {
         .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ enable CORS
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/register", "/api/login").permitAll()
-            .anyRequest().authenticated())
+            .anyRequest().authenticated()).sessionManagement(session -> session
+        .sessionFixation(sessionFixation -> sessionFixation.migrateSession())
+    )
         .formLogin(form -> form.disable())
 
         .logout(logout -> logout
