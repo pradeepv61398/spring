@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CustomerApplication",
+            "request": "launch",
+            "mainClass": "com.insurnace.customer.CustomerApplication"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-MetlifeApplication<metlife>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.cso.metlife.MetlifeApplication",
+            "projectName": "metlife",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

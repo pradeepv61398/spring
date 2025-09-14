@@ -27,3 +27,37 @@ This README would normally document whatever steps are necessary to get your app
 
 * Repo owner or admin
 * Other community or team contact
+
+Steps:
+
+User Registration / Login
+
+Name, email, phone, password
+
+Optional KYC / identity verification
+
+Profile Setup / Health Details
+
+Age, gender, medical conditions
+
+Lifestyle info (smoking, exercise, etc.)
+
+Optional insurance history
+
+Policy Recommendation / Selection
+
+Show relevant policies based on health profile
+
+Allow comparison of coverage, premium, term, add-ons
+
+Policy Enrollment
+
+Select policy and add-ons
+
+Payment integration (online/offline)
+
+Confirmation & Dashboard Access
+
+Show policy card, term, coverage, add-ons
+
+Generate digital ID card & documents
