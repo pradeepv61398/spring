@@ -13,5 +13,6 @@ public interface CustomerPolicyRepository extends JpaRepository<CustomerPolicy, 
 
     // You can add custom query methods here if needed
     List<CustomerPolicy> findByCustomerId(Long customerId);
+    
 
 }
