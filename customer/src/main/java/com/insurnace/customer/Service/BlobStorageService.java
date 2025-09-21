@@ -20,8 +20,11 @@ public class BlobStorageService {
     private final BlobContainerClient containerClient;
 
     @Autowired
-    public BlobStorageService(@Value("${azure.storage.connection-string}") String connectionString,
-                              @Value("${azure.storage.container-name}") String containerName) {
+     public BlobStorageService(
+    //     @Value("${azure.storage.connection-string}") String connectionString,
+    // //                           @Value("${azure.storage.container-name}") String containerName,
+                               @Value("${spring.cloud.azure.storage.blob.connection-string}") String connectionString,
+        @Value("${spring.cloud.azure.storage.blob.container-name}") String containerName) {
         BlobServiceClient blobServiceClient = new BlobServiceClientBuilder()
                 .connectionString(connectionString)
                 .buildClient();
