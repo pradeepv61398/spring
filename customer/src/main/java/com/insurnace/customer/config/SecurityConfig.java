@@ -1,7 +1,9 @@
 package com.insurnace.customer.config;
 
+import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +18,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class SecurityConfig {
+
+    @Value("${cors.allowed.origins:http://localhost:4200,https://localhost:4200}")
+    private String allowedOrigins;
 
      // 1️⃣ Password encoder bean
     @Bean
@@ -50,14 +55,18 @@ public class SecurityConfig {
     @Bean
 public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:4200")); // Angular app origin
-    configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+    
+    // Parse allowed origins from environment variable or use defaults
+    List<String> origins = Arrays.asList(allowedOrigins.split(","));
+    configuration.setAllowedOrigins(origins);
+    
+    configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS","PATCH"));
     configuration.setAllowedHeaders(List.of("*"));
     configuration.setAllowCredentials(true); // allow cookies/session
+    configuration.setMaxAge(3600L); // Cache preflight response for 1 hour
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
     return source;
-
 }
 }
