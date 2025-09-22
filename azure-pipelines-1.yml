@@ -2,39 +2,37 @@ trigger:
 - main
 
 variables:
-  # Azure Resource Manager connection
   azureSubscription: '49cf99f3-ffc8-4c5b-a65b-cdcbf794b95a'
-
-  # Web app details
   webAppName: 'insuranceportal'
   environmentName: 'insuranceportal'
 
 stages:
 - stage: Build
-  displayName: Build Stage
+  displayName: Build stage
   jobs:
   - job: MavenPackageAndPublishArtifacts
     displayName: Maven Package and Publish Artifacts
     pool:
-      name: Default
+      name: Default        # Use your self-hosted agent pool
       demands:
         - maven
         - java
     steps:
-    - checkout: self
+    - checkout: self      # ensures your repo is downloaded
 
-    # Install Java 21 if not already configured
+    # Install JDK 21
     - task: JavaToolInstaller@0
       displayName: 'Install JDK 21'
       inputs:
         versionSpec: '21'
-        jdkArchitecture: 'x64'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
 
     # Maven build
     - task: Maven@4
       displayName: 'Maven Package'
       inputs:
-        mavenPomFile: '$(Build.SourcesDirectory)/customer/pom.xml'
+        mavenPomFile: '$(Build.SourcesDirectory)/customer/pom.xml' 
         mavenOptions: '-Xmx3072m'
         javaHomeOption: 'JDKVersion'
         jdkVersionOption: '21'
@@ -43,9 +41,9 @@ stages:
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         goals: 'clean package'
 
-    # Copy artifacts
+    # Copy build artifacts
     - task: CopyFiles@2
-      displayName: 'Copy Files to Artifact Staging Directory'
+      displayName: 'Copy Files to artifact staging directory'
       inputs:
         SourceFolder: '$(Build.SourcesDirectory)/customer/target'
         Contents: '*.jar'
@@ -55,7 +53,7 @@ stages:
       artifact: drop
 
 - stage: Deploy
-  displayName: Deploy Stage
+  displayName: Deploy stage
   dependsOn: Build
   condition: succeeded()
   jobs:
@@ -63,15 +61,13 @@ stages:
     displayName: Deploy Linux Web App
     environment: $(environmentName)
     pool:
-      name: Default
-      demands:
-        - java
+      name: Default   # Self-hosted agent pool can also be used
     strategy:
       runOnce:
         deploy:
           steps:
           - task: AzureWebApp@1
-            displayName: 'Deploy to Azure Web App: insuranceportal'
+            displayName: 'Azure Web App Deploy: insuranceportal'
             inputs:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux
