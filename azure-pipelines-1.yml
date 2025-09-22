@@ -2,40 +2,37 @@ trigger:
 - main
 
 variables:
-  azureSubscription: '49cf99f3-ffc8-4c5b-a65b-cdcbf794b95a'  # Replace with your subscription ID
+  # Azure Resource Manager connection
+  azureSubscription: '49cf99f3-ffc8-4c5b-a65b-cdcbf794b95a'
+
+  # Web app details
   webAppName: 'insuranceportal'
   environmentName: 'insuranceportal'
 
 stages:
+# =========================
+# Stage 1: Build
+# =========================
 - stage: Build
   displayName: Build Stage
   jobs:
   - job: MavenPackageAndPublishArtifacts
     displayName: Maven Package and Publish Artifacts
     pool:
-      name: Default   # Self-hosted agent pool
+      name: Default         # self-hosted agent pool
       demands:
         - maven
         - java
-
     steps:
-    - checkout: self
-
-    - task: JavaToolInstaller@0
-      displayName: 'Set up Java 21'
-      inputs:
-        versionSpec: '21'
-        jdkArchitectureOption: 'x64'
-        jdkSourceOption: 'PreInstalled'
+    - checkout: self       # download repo
 
     - task: Maven@4
       displayName: 'Maven Package'
       inputs:
         mavenPomFile: '$(Build.SourcesDirectory)/customer/pom.xml'
         mavenOptions: '-Xmx3072m'
-        javaHomeOption: 'JDKVersion'
-        jdkVersionOption: '21'
-        jdkArchitectureOption: 'x64'
+        javaHomeOption: 'JDKDirectory'
+        jdkDirectory: '/usr/lib/jvm/java-21-openjdk-amd64'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         goals: 'clean package'
@@ -50,6 +47,9 @@ stages:
     - upload: '$(Build.ArtifactStagingDirectory)'
       artifact: drop
 
+# =========================
+# Stage 2: Deploy
+# =========================
 - stage: Deploy
   displayName: Deploy Stage
   dependsOn: Build
@@ -59,15 +59,17 @@ stages:
     displayName: Deploy Linux Web App
     environment: $(environmentName)
     pool:
-      name: Default   # Self-hosted agent
+      name: Default
+      demands:
+        - java
     strategy:
       runOnce:
         deploy:
           steps:
           - task: AzureWebApp@1
-            displayName: 'Deploy to Azure Linux Web App'
+            displayName: 'Azure Web App Deploy: insuranceportal'
             inputs:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux
               appName: $(webAppName)
-              package: '$(Pipeline.Workspace)/drop/**/*.jar'
+              package: '$(Pipeline.Workspace)/drop/*.jar'
