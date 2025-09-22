@@ -36,10 +36,11 @@ public class UserController {
     public ResponseEntity<?> register(@RequestBody RegistrationRequest request) {
         try {
             User user = userService.registerUser(request);
-            // return ResponseEntity.ok("User registered successfully");
+            // return ResponseEntity.ok("User registered successfully"); 
             return ResponseEntity.ok(Map.of("message", "User registered successfully"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            
         }
     }
 
