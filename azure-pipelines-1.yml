@@ -1,0 +1,31 @@
+- job: MavenPackageAndPublishArtifacts
+  displayName: Maven Package and Publish Artifacts
+  pool:
+    name: Default
+    demands:
+      - maven
+      - java
+  steps:
+  - checkout: self   # ensures your repo is downloaded
+
+  - task: Maven@4
+    displayName: 'Maven Package'
+    inputs:
+      mavenPomFile: '$(Build.SourcesDirectory)/customer/pom.xml'  # <- updated
+      mavenOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '21'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: true
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      goals: 'clean package'
+
+  - task: CopyFiles@2
+    displayName: 'Copy Files to artifact staging directory'
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/customer/target'
+      Contents: '*.jar'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+  - upload: '$(Build.ArtifactStagingDirectory)'
+    artifact: drop
