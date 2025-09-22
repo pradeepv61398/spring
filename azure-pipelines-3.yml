@@ -1,59 +1,51 @@
-# Maven package Java project Web App to Linux on Azure
-# Build your Java project and deploy it to Azure as a Linux web app
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
-
 trigger:
 - main
 
 variables:
+  # Azure Resource Manager connection
+  azureSubscription: '06425b4e-cba7-49b2-b6e9-66e4f5244927'
 
-  # Azure Resource Manager connection created during pipeline creation
-  azureSubscription: 'a1df7fb9-d4ab-4ef2-adc9-2c5d87bfc34c'
-
-  # Web app name
+  # Web app details
   webAppName: 'insuranceportal'
-
-  # Environment name
   environmentName: 'insuranceportal'
-
-  # Agent VM image name
-  vmImageName: 'ubuntu-latest'
 
 stages:
 - stage: Build
-  displayName: Build stage
+  displayName: Build Stage
   jobs:
-  - job: MavenPackageAndPublishArtifacts
-    displayName: Maven Package and Publish Artifacts
+  - job: MavenBuild
+    displayName: Maven Build and Publish Artifacts
     pool:
-      vmImage: $(vmImageName)
-
+      name: 'Default'   # Your self-hosted agent pool
     steps:
+    # Use Java 21 installed on the VM
     - task: Maven@4
       displayName: 'Maven Package'
       inputs:
         mavenPomFile: 'pom.xml'
         mavenOptions: '-Xmx3072m'
         javaHomeOption: 'JDKVersion'
-        jdkVersionOption: '1.17' 
+        jdkVersionOption: '21'
         jdkArchitectureOption: 'x64'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         goals: 'clean package'
 
     - task: CopyFiles@2
-      displayName: 'Copy Files to artifact staging directory'
+      displayName: 'Copy Artifacts to Staging Directory'
       inputs:
         SourceFolder: '$(System.DefaultWorkingDirectory)'
         Contents: '**/target/*.?(war|jar)'
-        TargetFolder: $(Build.ArtifactStagingDirectory)
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
-    - upload: $(Build.ArtifactStagingDirectory)
-      artifact: drop
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifacts'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
 
 - stage: Deploy
-  displayName: Deploy stage
+  displayName: Deploy Stage
   dependsOn: Build
   condition: succeeded()
   jobs:
@@ -61,13 +53,13 @@ stages:
     displayName: Deploy Linux Web App
     environment: $(environmentName)
     pool:
-      vmImage: $(vmImageName)
+      name: 'Default'   # Your self-hosted agent
     strategy:
       runOnce:
         deploy:
           steps:
           - task: AzureWebApp@1
-            displayName: 'Azure Web App Deploy: insuranceportal'
+            displayName: 'Deploy to Azure Web App'
             inputs:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux
