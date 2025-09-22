@@ -1,27 +1,17 @@
-# Maven package Java project Web App to Linux on Azure
-# Build your Java project and deploy it to Azure as a Linux web app
-
 trigger:
 - main
 
 variables:
-
-  # Azure Resource Manager connection created during pipeline creation
+  # Azure Resource Manager connection
   azureSubscription: '49cf99f3-ffc8-4c5b-a65b-cdcbf794b95a'
 
-  # Web app name
+  # Web app details
   webAppName: 'insuranceportal'
-
-  # Environment name
   environmentName: 'insuranceportal'
 
 stages:
-
-# -----------------------------
-# Build Stage
-# -----------------------------
 - stage: Build
-  displayName: Build stage
+  displayName: Build Stage
   jobs:
   - job: MavenPackageAndPublishArtifacts
     displayName: Maven Package and Publish Artifacts
@@ -31,22 +21,31 @@ stages:
         - maven
         - java
     steps:
-    - checkout: self   # ensure your repo is downloaded
+    - checkout: self
 
+    # Install Java 21 if not already configured
+    - task: JavaToolInstaller@0
+      displayName: 'Install JDK 21'
+      inputs:
+        versionSpec: '21'
+        jdkArchitecture: 'x64'
+
+    # Maven build
     - task: Maven@4
       displayName: 'Maven Package'
       inputs:
-        mavenPomFile: '$(Build.SourcesDirectory)/customer/pom.xml'  # updated path
+        mavenPomFile: '$(Build.SourcesDirectory)/customer/pom.xml'
         mavenOptions: '-Xmx3072m'
         javaHomeOption: 'JDKVersion'
-        jdkVersionOption: '21'  # Java 21
+        jdkVersionOption: '21'
         jdkArchitectureOption: 'x64'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         goals: 'clean package'
 
+    # Copy artifacts
     - task: CopyFiles@2
-      displayName: 'Copy Files to artifact staging directory'
+      displayName: 'Copy Files to Artifact Staging Directory'
       inputs:
         SourceFolder: '$(Build.SourcesDirectory)/customer/target'
         Contents: '*.jar'
@@ -55,11 +54,8 @@ stages:
     - upload: '$(Build.ArtifactStagingDirectory)'
       artifact: drop
 
-# -----------------------------
-# Deploy Stage
-# -----------------------------
 - stage: Deploy
-  displayName: Deploy stage
+  displayName: Deploy Stage
   dependsOn: Build
   condition: succeeded()
   jobs:
@@ -68,14 +64,16 @@ stages:
     environment: $(environmentName)
     pool:
       name: Default
+      demands:
+        - java
     strategy:
       runOnce:
         deploy:
           steps:
           - task: AzureWebApp@1
-            displayName: 'Azure Web App Deploy: insuranceportal'
+            displayName: 'Deploy to Azure Web App: insuranceportal'
             inputs:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux
               appName: $(webAppName)
-              package: '$(Pipeline.Workspace)/drop/*.jar'
+              package: '$(Pipeline.Workspace)/drop/**/*.jar'
