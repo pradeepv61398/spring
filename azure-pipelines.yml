@@ -1,29 +1,31 @@
-# Docker
-# Build a Docker image
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+- job: MavenPackageAndPublishArtifacts
+  displayName: Maven Package and Publish Artifacts
+  pool:
+    name: Default
+    demands:
+      - maven
+      - java
+  steps:
+  - checkout: self   # ensures your repo is downloaded
 
-trigger:
-- main
+  - task: Maven@4
+    displayName: 'Maven Package'
+    inputs:
+      mavenPomFile: '$(Build.SourcesDirectory)/customer/pom.xml'  # <- updated
+      mavenOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '21'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: true
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      goals: 'clean package'
 
-resources:
-- repo: self
+  - task: CopyFiles@2
+    displayName: 'Copy Files to artifact staging directory'
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/customer/target'
+      Contents: '*.jar'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
-variables:
-  tag: '$(Build.BuildId)'
-
-stages:
-- stage: Build
-  displayName: Build image
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: ubuntu-latest
-    steps:
-    - task: Docker@2
-      displayName: Build an image
-      inputs:
-        command: build
-        dockerfile: '**/Dockerfile'
-        tags: |
-          $(tag)
+  - upload: '$(Build.ArtifactStagingDirectory)'
+    artifact: drop
