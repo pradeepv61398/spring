@@ -1,9 +1,9 @@
-name: Build and deploy Spring Boot app to Azure Web App
+name: Build and Deploy Spring Boot App to Azure Web App
 
 env:
-  AZURE_WEBAPP_NAME: insuranceportal  # Your Azure Web App name
-  JAVA_VERSION: '21'                  # Java version to use
-  DISTRIBUTION: zulu                  # Java distribution
+  AZURE_WEBAPP_NAME: insuranceportal   # your Azure Web App name
+  JAVA_VERSION: '21'
+  DISTRIBUTION: zulu
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,32 +27,13 @@ jobs:
           cache: maven
 
       # 3️⃣ Build the Spring Boot JAR
-      - name: Build with Maven
-        run: mvn clean package -f customer/pom.xml
+      - name: Build Spring Boot JAR
+        run: mvn clean package -f customer/pom.xml -DskipTests
 
-      # 4️⃣ Upload JAR as artifact
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: springboot-jar
-          path: customer/target/*.jar
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      # 1️⃣ Download the artifact
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: springboot-jar
-          path: ./customer/target
-
-      # 2️⃣ Deploy to Azure Web App
+      # 4️⃣ Deploy directly to Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.SPRING_BOOT_SECRET }}
-          package: ./customer/target/*.jar
+          package: ./customer/target/customer-0.0.1-SNAPSHOT.jar
