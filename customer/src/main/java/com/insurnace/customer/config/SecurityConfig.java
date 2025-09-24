@@ -62,7 +62,7 @@ public class SecurityConfig {
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*","Authorization", "Content-Type"));
-        config.setAllowCredentials(true);  // ✅ allow cookies if needed
+        config.setAllowCredentials(false);  // ✅ allow cookies if needed
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
