@@ -19,38 +19,55 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class SecurityConfig {
 
-    @Value("${cors.allowed.origins:http://localhost:4200,https://localhost:4200}")
+    @Value("${cors.allowed.origins:https://witty-stone-00c784300.1.azurestaticapps.net,http://localhost:4200}")
     private String allowedOrigins;
 
-     // 1️⃣ Password encoder bean
+    // 1️⃣ Password encoder bean
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // 2️⃣ Authentication manager
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-        .csrf(csrf -> csrf.disable())
-        .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ enable CORS
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/register", "/api/login").permitAll()
-            .anyRequest().authenticated()).sessionManagement(session -> session
-        .sessionFixation(sessionFixation -> sessionFixation.migrateSession())
-    )
-        .formLogin(form -> form.disable())
-
-        .logout(logout -> logout
-            .logoutUrl("/api/logout")
-            .deleteCookies("JSESSIONID"));
-
-    return http.build();
-    }
-     // ✅ Expose AuthenticationManager
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
+
+    // 3️⃣ Main security filter chain
+    // @Bean
+    // public SecurityFilterChain securityFilterChain(HttpSecurity http) throws
+    // Exception {
+    // http
+    // .csrf(csrf -> csrf.disable())
+    // .cors(cors -> cors.configurationSource(corsConfigurationSource())) // enable
+    // CORS
+    // .authorizeHttpRequests(auth -> auth
+    // .requestMatchers("/api/register", "/api/login").permitAll() // public
+    // endpoints
+    // .anyRequest().authenticated())
+    // .sessionManagement(session -> session
+    // .sessionFixation(sessionFixation -> sessionFixation.migrateSession()))
+    // .formLogin(form -> form.disable())
+    // .logout(logout -> logout
+    // .logoutUrl("/api/logout")
+    // .deleteCookies("JSESSIONID"));
+
+    // return http.build();
+    // }
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/register", "/api/login").permitAll() // session endpoints
+                        .requestMatchers("/jwt/**").permitAll() // JWT endpoints
+                        .anyRequest().authenticated());
+
+        return http.build();
+    }
+ 
     
    @Bean
 public CorsConfigurationSource corsConfigurationSource() {
