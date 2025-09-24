@@ -85,7 +85,7 @@ public class SecurityConfig {
 
         // Allow all headers
        // configuration.setAllowedHeaders(List.of("*"));
-        setAllowedHeaders(List.of("*", "Authorization"))
+        setAllowedHeaders(List.of("*", "Authorization"));
 
         // No credentials since JWT is sent in headers
         configuration.setAllowCredentials(false);
