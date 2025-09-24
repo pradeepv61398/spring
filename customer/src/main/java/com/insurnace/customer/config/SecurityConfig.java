@@ -1,107 +1,72 @@
 package com.insurnace.customer.config;
-
-import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.insurnace.customer.util.JwtAuthenticationFilter;
+
 @Configuration
 public class SecurityConfig {
 
-    @Value("${cors.allowed.origins:https://witty-stone-00c784300.1.azurestaticapps.net,http://localhost:4200}")
-    private String allowedOrigins;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // 1️⃣ Password encoder bean
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 2️⃣ Authentication manager
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-            throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
     }
 
-    // 3️⃣ Main security filter chain
-    // @Bean
-    // public SecurityFilterChain securityFilterChain(HttpSecurity http) throws
-    // Exception {
-    // http
-    // .csrf(csrf -> csrf.disable())
-    // .cors(cors -> cors.configurationSource(corsConfigurationSource())) // enable
-    // CORS
-    // .authorizeHttpRequests(auth -> auth
-    // .requestMatchers("/api/register", "/api/login").permitAll() // public
-    // endpoints
-    // .anyRequest().authenticated())
-    // .sessionManagement(session -> session
-    // .sessionFixation(sessionFixation -> sessionFixation.migrateSession()))
-    // .formLogin(form -> form.disable())
-    // .logout(logout -> logout
-    // .logoutUrl("/api/logout")
-    // .deleteCookies("JSESSIONID"));
-
-    // return http.build();
-    // }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // allow anonymous CORS preflight requests
-                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/register", "/api/login").permitAll() // session endpoints
-                .requestMatchers("/jwt/**").permitAll() // JWT endpoints
+                .requestMatchers("/api/login", "/api/register").permitAll()
+                .requestMatchers("/jwt/**").permitAll()
                 .anyRequest().authenticated()
             );
 
+        // Add JWT filter before UsernamePasswordAuthenticationFilter
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
- 
-    
-  
+
     @Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
 
-    // Allowed origins (from property, comma-separated fallback handled in @Value)
-    List<String> origins = Arrays.asList(allowedOrigins.split(","));
-    configuration.setAllowedOrigins(origins);
+        config.setAllowedOrigins(List.of(
+            "http://localhost:4200",
+            "https://witty-stone-00c784300.1.azurestaticapps.net"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowCredentials(true);  // ✅ allow cookies if needed
+        config.setMaxAge(3600L);
 
-    // Allowed HTTP methods
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-
-    // Allow all headers including Authorization for JWT
-    configuration.setAllowedHeaders(List.of("*", "Authorization", "Content-Type"));
-    configuration.setExposedHeaders(List.of("Authorization"));
-
-    // No credentials since JWT is sent in headers (set true only if using cookies)
-    configuration.setAllowCredentials(false);
-
-    // Cache preflight response for 1 hour
-    configuration.setMaxAge(3600L);
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-
-    return source;
-}
-
-
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 }
