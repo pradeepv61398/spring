@@ -52,14 +52,17 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
     
-    @Bean
+   @Bean
 public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.addAllowedOriginPattern("*");
-    // Parse allowed origins from environment variable or use defaults
-    List<String> origins = Arrays.asList(allowedOrigins.split(","));
+
+    // Use environment variable or fallback defaults
+    List<String> origins = Arrays.asList(
+        "http://localhost:4200",
+        "https://witty-stone-00c784300.1.azurestaticapps.net"
+    );
     configuration.setAllowedOrigins(origins);
-    
+
     configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS","PATCH"));
     configuration.setAllowedHeaders(List.of("*"));
     configuration.setAllowCredentials(true); // allow cookies/session
@@ -69,4 +72,5 @@ public CorsConfigurationSource corsConfigurationSource() {
     source.registerCorsConfiguration("/**", configuration);
     return source;
 }
+
 }
