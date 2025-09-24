@@ -58,12 +58,16 @@ public class SecurityConfig {
     // }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/register", "/api/login").permitAll() // session endpoints
-                        .requestMatchers("/jwt/**").permitAll() // JWT endpoints
-                        .anyRequest().authenticated());
+        http
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .authorizeHttpRequests(auth -> auth
+                // allow anonymous CORS preflight requests
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/api/register", "/api/login").permitAll() // session endpoints
+                .requestMatchers("/jwt/**").permitAll() // JWT endpoints
+                .anyRequest().authenticated()
+            );
 
         return http.build();
     }
@@ -74,17 +78,16 @@ public class SecurityConfig {
 public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
 
-    // Allowed origins
-    configuration.setAllowedOrigins(List.of(
-            "http://localhost:4200",
-            "https://witty-stone-00c784300.1.azurestaticapps.net"
-    ));
+    // Allowed origins (from property, comma-separated fallback handled in @Value)
+    List<String> origins = Arrays.asList(allowedOrigins.split(","));
+    configuration.setAllowedOrigins(origins);
 
     // Allowed HTTP methods
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
     // Allow all headers including Authorization for JWT
-    configuration.setAllowedHeaders(List.of("*", "Authorization"));
+    configuration.setAllowedHeaders(List.of("*", "Authorization", "Content-Type"));
+    configuration.setExposedHeaders(List.of("Authorization"));
 
     // No credentials since JWT is sent in headers (set true only if using cookies)
     configuration.setAllowCredentials(false);
