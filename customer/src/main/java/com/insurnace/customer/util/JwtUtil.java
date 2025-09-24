@@ -1,18 +1,16 @@
 package com.insurnace.customer.util;
 
-
 import org.springframework.stereotype.Component;
-
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-
 import java.security.Key;
 import java.util.Date;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.JwtException;
 
 @Component
 public class JwtUtil {
-    private final String secret = "qD7Y!rG$9kL2pX&zT@4vF^hN*3sJ0mUw";
+    private final String secret = "qD7Y!rG$9kL2pX&zT@4vF^hN*3sJ0mUw\n";
+
     private final long expirationMs = 1000 * 60 * 60; // 1 hour
     private final Key key = Keys.hmacShaKeyFor(secret.getBytes());
 
