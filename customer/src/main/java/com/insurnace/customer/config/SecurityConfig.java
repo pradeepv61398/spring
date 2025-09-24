@@ -69,25 +69,33 @@ public class SecurityConfig {
     }
  
     
-   @Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
+  
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
 
-    // Use environment variable or fallback defaults
-    List<String> origins = Arrays.asList(
-        "http://localhost:4200",
-        "https://witty-stone-00c784300.1.azurestaticapps.net"
-    );
-    configuration.setAllowedOrigins(origins);
+        // Allowed origins
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:4200",
+                "https://witty-stone-00c784300.1.azurestaticapps.net"
+        ));
 
-    configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS","PATCH"));
-    configuration.setAllowedHeaders(List.of("*"));
-    configuration.setAllowCredentials(true); // allow cookies/session
-    configuration.setMaxAge(3600L); // Cache preflight response for 1 hour
+        // Allowed HTTP methods
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-    return source;
-}
+        // Allow all headers
+        configuration.setAllowedHeaders(List.of("*"));
+
+        // No credentials since JWT is sent in headers
+        configuration.setAllowCredentials(false);
+
+        // Cache preflight response for 1 hour
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
+    }
 
 }
