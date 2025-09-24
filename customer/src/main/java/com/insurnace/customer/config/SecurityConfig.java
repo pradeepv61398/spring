@@ -61,7 +61,7 @@ public class SecurityConfig {
             "https://witty-stone-00c784300.1.azurestaticapps.net"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowedHeaders(List.of("*","Authorization", "Content-Type"));
         config.setAllowCredentials(true);  // ✅ allow cookies if needed
         config.setMaxAge(3600L);
 
