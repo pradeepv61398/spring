@@ -138,7 +138,8 @@ public class JwtAuthController {
             return ResponseEntity.ok(Map.of(
                 "id", user.getId(),
                 "email", user.getEmail(),
-                "firstName", user.getName(),
+                "Name", user.getName(),
+                "phoneNumber", user.getPhoneNumber(),
                 "tokenValid", true
             ));
             
